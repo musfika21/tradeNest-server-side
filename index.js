@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const port = process.env.PORT || 3000;
+require('dotenv').config();
 
 // middlewares
 app.use(cors());
@@ -24,6 +25,17 @@ async function run() {
   try {
 
     await client.connect();
+
+    // COLLECTIONS
+    const productsCollection = client.db('tradeNest').collection('products');
+
+     // ADD PRODUCT AND SEND IN THE DATABASE (CREATE)
+    app.post('/products', async (req, res) => {
+      const newProducts = req.body;
+      console.log(newProducts);
+      const result = await productsCollection.insertOne(newProducts);
+      res.send(result);
+    })
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
