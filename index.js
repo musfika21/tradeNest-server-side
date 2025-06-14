@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require('express');
 const app = express();
 const cors = require('cors');
@@ -29,13 +29,34 @@ async function run() {
     // COLLECTIONS
     const productsCollection = client.db('tradeNest').collection('products');
 
-     // ADD PRODUCT AND SEND IN THE DATABASE (CREATE)
+    // GET ALL PRODUCTS FROM DATABASE IN SERVER
+    app.get('/products', async (req, res) => {
+      const email = req.query.email;
+      let query = {};
+      if (email) {
+        query = { email }; // Use the correct field name you're storing
+      }
+      const result = await productsCollection.find(query).toArray(); // 👈 now using the query
+      res.send(result);
+    });
+
+    // SINGLE PRODUCT DETAILS GET FROM THE DATABASE 
+    app.get('/products/:id', async(req, res) =>{
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id)}
+      const result = await productsCollection.findOne(query);
+      res.send(result);
+    });
+
+
+    // ADD PRODUCT AND SEND IN THE DATABASE (CREATE)
     app.post('/products', async (req, res) => {
       const newProducts = req.body;
       console.log(newProducts);
       const result = await productsCollection.insertOne(newProducts);
       res.send(result);
-    })
+    });
+    
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
