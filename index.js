@@ -48,6 +48,13 @@ async function run() {
       res.send(result);
     });
 
+    // MY POSTED PRODUCT'S
+    app.get('/my-Products', async (req, res) => {
+            const email = req.query.email;
+            const query = { email };
+            const result = await productsCollection.find(query).toArray();
+            res.send(result);
+        });
 
     // ADD PRODUCT AND SEND IN THE DATABASE (CREATE)
     app.post('/products', async (req, res) => {
