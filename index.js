@@ -26,6 +26,7 @@ async function run() {
 
     // COLLECTIONS
     const productsCollection = client.db('tradeNest').collection('products');
+    const purchaseCollection = client.db('tradeNest').collection('purchase');
 
     // GET ALL PRODUCTS FROM DATABASE IN SERVER
     app.get('/products', async (req, res) => {
@@ -39,7 +40,7 @@ async function run() {
     });
 
     // SINGLE PRODUCT DETAILS GET FROM THE DATABASE 
-    app.get('/products/:id', async (req, res) => {
+    app.get('/product/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const result = await productsCollection.findOne(query);
@@ -47,9 +48,10 @@ async function run() {
     });
 
     // // GET DATA ACCORDING TO CATEGORY
-    app.get('/products/category/:category', async (req, res) => {
+    app.get('/category/:category', async (req, res) => {
       const category = (req.params.category);
-      const query = { category };
+      console.log(category);
+      const query = { category_slug: category };
       const result = await productsCollection.find(query).toArray();
       res.send(result);
     });
@@ -62,12 +64,28 @@ async function run() {
       res.send(result);
     });
 
+    // MY PURCHASE PRODUCT'S FROM THE DATABASE
+     app.get('/my-Purchase', async (req, res) => {
+      const email = req.query.email;
+      const query = { email };
+      const result = await purchaseCollection.find(query).toArray();
+      res.send(result);
+    });
+
     // ADD PRODUCT AND SEND IN THE DATABASE (CREATE)
     app.post('/products', async (req, res) => {
       const newProducts = req.body;
       const result = await productsCollection.insertOne(newProducts);
       res.send(result);
     });
+
+    // ADD PURCHASE PRODUCT IN THE DATABASE
+    app.post('/purchase', async (req, res) => {
+      const newPurchase = req.body;
+      const result = await purchaseCollection.insertOne(newPurchase);
+      res.send(result);
+    });
+
 
     // UPDATE SINGLE PRODUCT DATA
     app.put('/products/:id', async (req, res) => {
@@ -84,81 +102,32 @@ async function run() {
     });
 
     // HANDLING PRODUCT QUANTITY AFTER BUYING
-    // app.patch('/products/buy/:id', async (req, res) => {
-    //   const id = req.params.id;
-    //   console.log(id);
-    //   const filter = { _id: new ObjectId(id) };
-    //   const mainQuantity = { $inc: { BuyQuantity: 1 } };
-    //   const result = await productsCollection.updateOne(filter, job);
-    //   res.send(result);
-    // });
+    app.patch("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const { buyQuantity } = req.body;
 
-    const ObjectId = require('mongodb').ObjectId;
+      // console.log("Product ID:", id);
+      // console.log("Buy Quantity:", buyQuantity);
 
-// HANDLING PRODUCT QUANTITY AFTER BUYING
-app.patch('/products/buy/:id', async (req, res) => {
-  try {
-    const id = req.params.id;
-    const { quantity, userEmail } = req.body;
-
-    // Validate input
-    if (!ObjectId.isValid(id)) {
-      return res.status(400).json({ success: false, message: 'Invalid product ID' });
-    }
-    if (!quantity || quantity < 1 || !Number.isInteger(quantity)) {
-      return res.status(400).json({ success: false, message: 'Invalid quantity' });
-    }
-    if (!userEmail) {
-      return res.status(400).json({ success: false, message: 'User email is required' });
-    }
-
-    const filter = { _id: new ObjectId(id) };
-    const product = await productsCollection.findOne(filter);
-
-    // Check if product exists
-    if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
-    }
-
-    // Validate quantity against minimum_selling_quantity and main_quantity
-    if (quantity < product.minimum_selling_quantity) {
-      return res.status(400).json({
-        success: false,
-        message: `Quantity cannot be less than ${product.minimum_selling_quantity}`,
-      });
-    }
-    if (quantity > product.main_quantity) {
-      return res.status(400).json({
-        success: false,
-        message: 'Requested quantity exceeds available stock',
-      });
-    }
-
-    // Update main_quantity by decrementing
-    const update = { $inc: { main_quantity: -quantity } };
-
-    // Optionally, log purchase details (e.g., in a separate collection)
-    await productsCollection.db.collection('purchases').insertOne({
-      productId: new ObjectId(id),
-      userEmail,
-      quantity,
-      purchaseDate: new Date(),
+      try {
+        const result = await productsCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $inc: { main_quantity: buyQuantity } }
+        );
+        res.send(result);
+      } catch (error) {
+        console.error("Error in PATCH:", error);
+        res.status(500).send({ error: "Internal server error" });
+      }
     });
 
-    // Perform the update
-    const result = await productsCollection.updateOne(filter, update);
-
-    if (result.modifiedCount === 1) {
-      return res.json({ success: true, message: 'Purchase successful' });
-    } else {
-      return res.status(500).json({ success: false, message: 'Failed to update product quantity' });
-    }
-  } catch (error) {
-    console.error('Error processing purchase:', error);
-    return res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
-
+    // DELETE PRODUCT FROM DATABASE
+    app.delete('/products/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await productsCollection.deleteOne(query);
+      res.send(result);
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
