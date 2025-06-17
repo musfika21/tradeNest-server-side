@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require('express');
 const app = express();
@@ -6,7 +7,6 @@ const admin = require("firebase-admin");
 const cors = require('cors');
 // const { messaging } = require('firebase-admin');
 const port = process.env.PORT || 3000;
-require('dotenv').config();
 
 // middlewares
 app.use(cors());
@@ -56,7 +56,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
 
-    await client.connect();
+    // await client.connect();
 
     // COLLECTIONS
     const productsCollection = client.db('tradeNest').collection('products');
@@ -169,7 +169,7 @@ async function run() {
       }
     });
 
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
 
