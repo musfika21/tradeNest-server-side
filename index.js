@@ -30,12 +30,7 @@ async function run() {
 
     // GET ALL PRODUCTS FROM DATABASE IN SERVER
     app.get('/products', async (req, res) => {
-      const email = req.query.email;
-      let query = {};
-      if (email) {
-        query = { email }; // Use the correct field name you're storing
-      }
-      const result = await productsCollection.find(query).toArray(); // 👈 now using the query
+      const result = await productsCollection.find().toArray()
       res.send(result);
     });
 
@@ -50,7 +45,6 @@ async function run() {
     // // GET DATA ACCORDING TO CATEGORY
     app.get('/category/:category', async (req, res) => {
       const category = (req.params.category);
-      console.log(category);
       const query = { category_slug: category };
       const result = await productsCollection.find(query).toArray();
       res.send(result);
@@ -65,7 +59,7 @@ async function run() {
     });
 
     // MY PURCHASE PRODUCT'S FROM THE DATABASE
-     app.get('/my-Purchase', async (req, res) => {
+    app.get('/my-Purchase', async (req, res) => {
       const email = req.query.email;
       const query = { email };
       const result = await purchaseCollection.find(query).toArray();
@@ -104,10 +98,10 @@ async function run() {
     // HANDLING PRODUCT QUANTITY AFTER BUYING
     app.patch("/products/:id", async (req, res) => {
       const id = req.params.id;
+      console.log(id)
       const { buyQuantity } = req.body;
-
-      // console.log("Product ID:", id);
-      // console.log("Buy Quantity:", buyQuantity);
+      console.log(buyQuantity)
+      console.log(typeof (buyQuantity))
 
       try {
         const result = await productsCollection.updateOne(
@@ -116,7 +110,6 @@ async function run() {
         );
         res.send(result);
       } catch (error) {
-        console.error("Error in PATCH:", error);
         res.status(500).send({ error: "Internal server error" });
       }
     });
@@ -127,6 +120,19 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await productsCollection.deleteOne(query);
       res.send(result);
+    });
+
+    // DELETE PURCHASE FROM DATABASE
+    app.delete('/purchase/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      try {
+        const result = await purchaseCollection.deleteOne(query);
+        res.send(result);
+      } catch (error) {
+        console.error('Error in DELETE /purchase:', error);
+        res.status(500).send({ error: 'Internal server error' });
+      }
     });
 
     await client.db("admin").command({ ping: 1 });
