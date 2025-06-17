@@ -1,7 +1,10 @@
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require('express');
 const app = express();
+const admin = require("firebase-admin");
+// const serviceAccount = require("./firebase-admin-service-key.json");
 const cors = require('cors');
+// const { messaging } = require('firebase-admin');
 const port = process.env.PORT || 3000;
 require('dotenv').config();
 
@@ -18,6 +21,37 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
+
+// admin.initializeApp({
+//   credential: admin.credential.cert(serviceAccount)
+// });
+
+
+// const verifyFirebaseToken = async (req, res, next) => {
+//   const authHeader = req.headers?.authorization
+
+//   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+//     return res.status(401).send({ message: 'unauthorized access' });
+//   }
+
+//   const token = authHeader.split(' ')[1];
+
+//   try {
+//     const decoded = await admin.auth().verifyIdToken(token)
+//     req.decoded = decoded;
+//     next();
+//   } 
+//   catch (error) {
+//     return res.status(401).send({ message: 'unauthorized access' });
+
+//   }
+// }
+
+// const verifyTokenEmail = async (req, res, next) =>{
+//   if(req.query.email !== req.decoded.email){
+//         return res.status(401).send({ message: 'unauthorized access' });
+//   }
+// }
 
 async function run() {
   try {
