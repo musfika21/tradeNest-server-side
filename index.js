@@ -3,9 +3,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require('express');
 const app = express();
 const admin = require("firebase-admin");
-// const serviceAccount = require("./firebase-admin-service-key.json");
 const cors = require('cors');
-// const { messaging } = require('firebase-admin');
 const port = process.env.PORT || 3000;
 
 // middlewares
