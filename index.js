@@ -114,21 +114,55 @@ async function run() {
 
 
     // UPDATE SINGLE PRODUCT DATA
-    app.put('/products/:id', async (req, res) => {
+    // UPDATE SINGLE PRODUCT DATA
+    app.patch('/products/:id', async (req, res) => {
       const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const options = { upsert: true };
-      const updatedProduct = req.body;
-      const updatedDoc = {
-        $set: updatedProduct
-      }
-      const result = await productsCollection.updateOne(filter, updatedDoc, options);
-      res.send(result);
 
+      try {
+        // Validate ObjectId
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ error: "Invalid product ID" });
+        }
+
+        const filter = { _id: new ObjectId(id) };
+        const updatedProduct = req.body;
+
+        // Remove _id and email from update data if they exist
+        delete updatedProduct._id;
+
+        // Convert string numbers to proper types if they exist
+        if (updatedProduct.main_quantity !== undefined) {
+          updatedProduct.main_quantity = parseInt(updatedProduct.main_quantity);
+        }
+        if (updatedProduct.minimum_selling_quantity !== undefined) {
+          updatedProduct.minimum_selling_quantity = parseInt(updatedProduct.minimum_selling_quantity);
+        }
+        if (updatedProduct.price !== undefined) {
+          updatedProduct.price = parseFloat(updatedProduct.price);
+        }
+        if (updatedProduct.rating !== undefined) {
+          updatedProduct.rating = parseFloat(updatedProduct.rating);
+        }
+
+        const updatedDoc = {
+          $set: updatedProduct
+        };
+
+        const result = await productsCollection.updateOne(filter, updatedDoc);
+
+        if (result.matchedCount === 0) {
+          return res.status(404).send({ error: "Product not found" });
+        }
+
+        res.send(result);
+      } catch (error) {
+        console.error('Error updating product:', error);
+        res.status(500).send({ error: "Internal server error", details: error.message });
+      }
     });
 
     // HANDLING PRODUCT QUANTITY AFTER BUYING
-    app.patch("/products/:id", async (req, res) => {
+    app.put("/products/:id", async (req, res) => {
       const id = req.params.id;
       console.log(id)
       const { buyQuantity } = req.body;
